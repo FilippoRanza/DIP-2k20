@@ -1,0 +1,5 @@
+# .gitignore automatically created on 2020-03-05 16:28
+# adding untracked files on 2020-03-05 16:28
+.vscode/
+__pycache__/
+utils/__pycache__/
