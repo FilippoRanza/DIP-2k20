@@ -143,11 +143,14 @@ def main():
             print("Abort")
             exit()
 
-    if args.comment is None:
-        comment = get_comment()
-    elif not args.no_comment:
-        comment = args.comment
-        comment = wrap_comment(comment)
+    if not args.no_comment:
+        if args.comment is None:
+            comment = get_comment()
+        else:
+            comment = args.comment
+            comment = wrap_comment(comment)    
+    else:
+        comment = None
 
     with open(name, "w+") as file:
         output_skeleton(file, comment, args.matplot)
