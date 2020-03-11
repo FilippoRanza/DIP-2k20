@@ -61,7 +61,7 @@ def crop(img, pos_x, pos_y, new_w, new_h):
     return out
 
 
-show_processing(IMG_PATH, crop, 100, 125, 200, 140)
+show_processing(IMG_PATH, crop, 100, 125, 50, 40)
 
 
 def negative(img):
