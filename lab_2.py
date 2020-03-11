@@ -42,17 +42,22 @@ def contrast_enhancement(img):
     return output
 
 
+def plot_hisogram(hist):
+    for ch in cv2.split(hist):
+        plt.plot(ch)
+
+
 def main():
     img = load_image(color=True)
     out = contrast_enhancement(img)
 
-    show_image(("original", img), ("enhanced", out), wait=-1)
+    show_image(("original", img), ("enhanced", out), wait=5)
 
     orig_hist = histogram(img)
     enha_hist = histogram(out)
 
-    plt.plot(orig_hist)
-    plt.plot(enha_hist)
+    plot_hisogram(orig_hist)
+    plot_hisogram(enha_hist)
 
     plt.show()
 

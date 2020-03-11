@@ -4,17 +4,15 @@ import cv2
 import numpy as np
 
 def colorize(function):
-    def __output__(img, *args):
+    def output(img, *args):
         if len(img.shape) == 3:
-            tmp = [None] * 3
-            for ch in range(3):
-                tmp[ch] = function(img[:, :, ch], *args)
-            output = np.stack(tmp, axis=-1)
+            tmp = [function(ch, *args) for ch in cv2.split(img)]
+            output = cv2.merge(tmp)
         else:
             output = function(img, *args)
         return output
 
-    return __output__
+    return output
 
 
 def show_image(*images, wait=0):
