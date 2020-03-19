@@ -4,6 +4,7 @@ import numpy as np
 
 from utils import *
 
+
 def convolve(x, y):
     len_x = len(x)
     len_y = len(y)
@@ -13,6 +14,7 @@ def convolve(x, y):
             out[i + j] = out[i + j] + vx * vy
 
     return out
+
 
 @colorize
 def convolve_2d(img, ker):

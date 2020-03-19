@@ -30,8 +30,7 @@ def apply_noise(img, mu, sigma):
 def main():
     img = load_image(color=True)
     imgs = (
-        (f"noise range = -{n} {n}", apply_noise(img, 0, 100))
-        for n in [10, 20, 30, 40]
+        (f"noise range = -{n} {n}", apply_noise(img, 0, 100)) for n in [10, 20, 30, 40]
     )
     show_image(*imgs, wait=7)
 
