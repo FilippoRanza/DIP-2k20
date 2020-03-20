@@ -65,14 +65,23 @@ def convolution_2D(image, kernel, out_type=np.uint8):
     return c
 
 
-def base_filter_2D(img, ker):
-    out = convolution_2D(img, ker)
+def crop(img, ker):
     sx, sy = ker.shape
     cut_x = sx // 2
     cut_y = sy // 2
 
-    sx, sy = out.shape
-    return out[cut_x : sx - cut_x, cut_y : sy - cut_y]
+    sx, sy = img.shape
+    return img[cut_x : sx - cut_x, cut_y : sy - cut_y]
+
+
+def filter_2D(img, ker, border=None, out_type=np.uint8):
+    if border:
+        tmp = make_support(img, ker, border, out_type)
+        out = convolution_2D(tmp, ker, out_type=out_type)
+        out = crop(out, ker)
+    else:
+        out = convolution_2D(img, ker, out_type=out_type)
+    return crop(out, ker)
 
 
 def make_kernel(size):
@@ -83,11 +92,10 @@ def make_kernel(size):
 
 def main():
     img = load_image()
-    ker = make_kernel(100)
+    ker = make_kernel(3)
 
-    tmp = (make_support(img, ker, f, np.uint8) for f in [propagate, mirror])
-
-    show_image(*tmp, wait=15)
+    out = filter_2D(img, ker, border=mirror)
+    assert img.shape == out.shape
 
 
 if __name__ == "__main__":
