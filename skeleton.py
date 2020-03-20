@@ -52,10 +52,11 @@ def add_empty_line(file, count):
         print(file=file)
 
 
-def output_skeleton(file, comment, matplot, time):
+def output_skeleton(file, comment, matplot, time, space):
     print("#! /usr/bin/python", file=file)
     add_empty_line(file, 1)
 
+    indent = " " * space
     if time:
         now = datetime.datetime.now()
         time_stamp = now.strftime("%Y-%m-%d %H:%M")
@@ -76,11 +77,11 @@ def output_skeleton(file, comment, matplot, time):
 
     add_empty_line(file, 2)
     print("def main():", file=file)
-    print("\tpass", file=file)
+    print(f"{indent}pass", file=file)
 
     add_empty_line(file, 2)
     print("if __name__ == '__main__':", file=file)
-    print("\tmain()", file=file)
+    print(f"{indent}main()", file=file)
 
 
 def parse_args():
@@ -141,6 +142,14 @@ def parse_args():
         action="store_true",
     )
 
+    parser.add_argument(
+        "-i",
+        "--indent",
+        default=4,
+        help="set indent size in spaces, default 4",
+        type=int
+    )
+
     return parser.parse_args()
 
 
@@ -168,7 +177,7 @@ def main():
         comment = None
 
     with open(name, "w+") as file:
-        output_skeleton(file, comment, args.matplot, args.time_info)
+        output_skeleton(file, comment, args.matplot, args.time_info, args.indent)
 
     if not args.no_git:
         run_git(name, args.git)
