@@ -9,19 +9,6 @@ import numpy as np
 
 from utils import *
 
-
-@colorize
-def histogram(img):
-    output = np.zeros(256)
-    for row in img:
-        for pixel in row:
-            output[pixel] += 1
-
-    x, y = img.shape
-    size = x * y
-    output /= size
-    return output
-
 def constrain(value, min_val, max_val):
     for i, v in enumerate(value):
         if v < min_val:
@@ -138,13 +125,39 @@ def rainbow(centroids):
         for _ in centroids
     ]
 
+def find_border(store, centr_count):
+    
+    sx, sy = store.shape
+    for row in range(sy):
+        prev = store[0, row]
+        for i, v in enumerate(store[1:, row]):
+            if v != prev:
+                prev = v
+                store[i, row] = centr_count
+    for col in range(sx):
+        prev = store[col, 0]
+        for i, v in enumerate(store[col, 1:]):
+            if v != prev:
+                prev = v
+                store[col, i] = centr_count
+
+        
+
+def low_pass_image(img, size):
+    ker = np.ones((size, size)) / (size ** 2)
+    return cv2.filter2D(img, -1, ker)
+
 def main():
-    img = load_image(color=True)
-    centr, store = lbg_quantization(img, 16, 0.5)
+    img = low_pass_image(load_image(color=True), 3)
+    centr, store = lbg_quantization(img, 8, 0.5)
     out = apply_lbg(centr, store)
+    
     centr = rainbow(centr)
-    rnd = apply_lbg(centr, store)
-    show_image(img, out, rnd, wait=5)
+    #find_border(store, len(centr))
+    #centr.append(np.zeros((3), dtype=np.uint8))
+    
+    bord = apply_lbg(centr, store)
+    show_image(img, out, bord, wait=5)
 
 if __name__ == '__main__':
     main()
