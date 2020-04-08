@@ -87,7 +87,9 @@ def reshape(img, transform, method=bilinear, full_scale=False):
     size_x, size_y = img.shape
     if full_scale:
         size_x *= transform[0, 0]
+        size_x -= transform[0, 2]
         size_y *= transform[1, 1]
+        size_y -= transform[1, 2]
     
     output = np.zeros((size_x, size_y))
     
@@ -127,7 +129,7 @@ def main():
 
     images = []
     for i in range(2, 5): 
-        transform = make_trasform_matrix(i)
+        transform = make_trasform_matrix(i, delta_x=100)
         tmp = reshape(img, transform, full_scale=True)
         images.append((f"Scale = {i} - bilinear", tmp))
 
