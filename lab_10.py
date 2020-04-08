@@ -80,7 +80,7 @@ def bicubic(img, x, y):
             pixel += coeff[i, j] * (alpha ** i) * (beta ** j)
     return pixel
 
-
+@colorize
 def reshape(img, transform, method=bilinear, full_scale=False):
 
     img = img.astype(np.float)
@@ -123,7 +123,7 @@ def make_trasform_matrix(scale_x, scale_y=0, delta_x=0, delta_y=0):
 
 
 def main():
-    img = load_image(color=False)
+    img = load_image(color=True)
 
     images = []
     for i in range(2, 5): 

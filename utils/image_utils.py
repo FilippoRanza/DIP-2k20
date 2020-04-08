@@ -4,12 +4,12 @@ import cv2
 import numpy as np
 
 def colorize(function):
-    def output(img, *args):
+    def output(img, *args, **kwargs):
         if len(img.shape) == 3:
-            tmp = [function(ch, *args) for ch in cv2.split(img)]
+            tmp = [function(ch, *args, **kwargs) for ch in cv2.split(img)]
             output = cv2.merge(tmp)
         else:
-            output = function(img, *args)
+            output = function(img, *args, **kwargs)
         return output
 
     return output
