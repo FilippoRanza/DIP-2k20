@@ -38,6 +38,16 @@ def bilinear(img, x, y):
 
     return pixel
 
+def nearest(img, x, y):
+    size_x, size_y = img.shape
+    cx = size_x // 2
+    cy = size_y // 2
+
+    x = check_point(np.round(x + cx), size_x)
+    y = check_point(np.round(y + cy), size_y)
+
+    return img[x, y]
+
 def extend(a, b, size):
     a -= 1
     if a < 0:
@@ -81,7 +91,13 @@ def bicubic(img, x, y):
     return pixel
 
 @colorize
-def reshape(img, transform, method=bilinear, full_scale=False):
+def reshape(img, transform, method="bilinear", full_scale=False):
+
+    methods = {
+        'bilinear' : bilinear,
+        'bicubic' : bicubic,
+        'nearest': nearest
+    }
 
     img = img.astype(np.float)
     size_x, size_y = img.shape
@@ -96,6 +112,7 @@ def reshape(img, transform, method=bilinear, full_scale=False):
     cx = size_x // 2
     cy = size_y // 2
     
+    method = methods[method]
     transform = np.linalg.inv(transform)
     for i in range(size_x):
         for j in range(size_y):
@@ -125,16 +142,19 @@ def make_trasform_matrix(scale_x, scale_y=0, delta_x=0, delta_y=0):
 
 
 def main():
-    img = load_image(color=True)
+    img = load_image(color=False)
 
     images = []
-    for i in range(2, 5): 
-        transform = make_trasform_matrix(i, delta_x=100)
+    for i in range(2, 6): 
+        transform = make_trasform_matrix(i)
         tmp = reshape(img, transform, full_scale=True)
         images.append((f"Scale = {i} - bilinear", tmp))
 
-        tmp = reshape(img, transform, bicubic, True)
+        tmp = reshape(img, transform, "bicubic", True)
         images.append((f"Scale = {i} - bicubic", tmp))
+
+        tmp = reshape(img, transform, "nearest", True)
+        images.append((f"Scale = {i} - nearest", tmp))
 
     show_image(*images)
 
