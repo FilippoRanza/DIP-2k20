@@ -172,6 +172,7 @@ def get_thresholds(count, base, delta, incr):
 def main():
     img = load_image(color=True)
     result = edge_detection(img, 4, 60)
+    result = np.maximum(result[:, :, 0], result[:, :, 1], result[:, :, 2])
     show_image(result)
     
 
