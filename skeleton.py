@@ -147,7 +147,7 @@ def parse_args():
         "--indent",
         default=4,
         help="set indent size in spaces, default 4",
-        type=int
+        type=int,
     )
 
     return parser.parse_args()

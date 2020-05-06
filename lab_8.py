@@ -9,6 +9,7 @@ import numpy as np
 
 from utils import *
 
+
 def zero_pad(img, ker):
     output = np.zeros(ker.shape)
     size_x, size_y = img.shape
@@ -89,6 +90,7 @@ def main():
     ker = high_pass_frequency_kernel(img, 21, 20)
     out = image_filter(img, ker)
     show_image(out, wait=1)
+
 
 if __name__ == "__main__":
     main()

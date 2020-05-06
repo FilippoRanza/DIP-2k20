@@ -3,6 +3,20 @@
 import cv2
 import numpy as np
 
+
+def get_histogram(img, normalize=True):
+    output = np.zeros(256)
+    for row in img:
+        for pixel in row:
+            output[pixel] += 1
+
+    if normalize:
+        x, y = img.shape
+        size = x * y
+        output /= size
+    return output
+
+
 def colorize(function):
     def output(img, *args, **kwargs):
         if len(img.shape) == 3:

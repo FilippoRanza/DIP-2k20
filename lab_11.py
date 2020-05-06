@@ -9,6 +9,7 @@ import numpy as np
 
 from utils import *
 
+
 def fixed_gaussian_filter():
     gaussian = np.array(
         [
@@ -22,35 +23,32 @@ def fixed_gaussian_filter():
     tot = np.sum(gaussian)
     return gaussian / tot
 
+
 def fixed_sobel_filter():
-    sobel = np.array(
-        [
-        [-1, 0, 1],
-        [-2, 0, 2],
-        [-1, 0, 1]
-        ]
-    )
+    sobel = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
     return sobel, np.rot90(sobel)
+
 
 def pre_filter(image):
     image = image.astype(np.float)
     low_pass = fixed_gaussian_filter()
     image = cv2.filter2D(image, -1, low_pass)
     hor, ver = fixed_sobel_filter()
-   
+
     hor_image = cv2.filter2D(image, -1, hor)
     ver_image = cv2.filter2D(image, -1, ver)
     angle = np.arctan2(ver_image, hor_image)
     angle = np.degrees(angle).astype(np.int)
-    angle = np.where(angle < 0, angle, angle+180)
-    angle = np.vectorize(lambda x: ((int((x+22.5)/45.))*45)%180)(angle)
-    
+    angle = np.where(angle < 0, angle, angle + 180)
+    angle = np.vectorize(lambda x: ((int((x + 22.5) / 45.0)) * 45) % 180)(angle)
+
     hor_image = np.square(hor_image)
     ver_image = np.square(ver_image)
 
     image = np.sqrt(np.add(hor_image, ver_image))
-    
+
     return image, angle
+
 
 def constrain(i, size):
     if i < 0:
@@ -59,17 +57,19 @@ def constrain(i, size):
         i = size - 1
     return i
 
+
 def get_pixel(img, i, j):
     size_x, size_y = img.shape
     i = constrain(i, size_x)
     j = constrain(j, size_y)
     return img[i, j]
 
+
 def center_of_magnitude(img, angle, i, j):
     if angle[i, j] == 90:
         prev_pixel = get_pixel(img, i, j - 1)
         next_pixel = get_pixel(img, i, j + 1)
-    elif angle[i,j] == 45:
+    elif angle[i, j] == 45:
         prev_pixel = get_pixel(img, i + 1, j - 1)
         next_pixel = get_pixel(img, i - 1, j + 1)
     elif angle[i, j] == 135:
@@ -78,7 +78,7 @@ def center_of_magnitude(img, angle, i, j):
     else:
         prev_pixel = get_pixel(img, i - 1, j)
         next_pixel = get_pixel(img, i + 1, j)
-        
+
     curr = img[i, j]
 
     return curr > prev_pixel and curr > next_pixel
@@ -105,11 +105,10 @@ def seach_neeighborhood(image, size, low, high, x, y):
                 pass
             elif val < high:
                 stat = 1
-            else: 
+            else:
                 stat = 2
                 break
     return stat
-
 
 
 @colorize
@@ -149,14 +148,13 @@ def apply_angle_colors(img, angle, color_map, threshold=100):
 
     return output.astype(np.uint8)
 
+
 def gen_color_map(count, a=-np.pi, b=np.pi):
     angles = np.linspace(a, b, count)
-    output = [
-        (angle, np.random.randint(0, 255, (3)))
-        for angle in angles
-    ]
+    output = [(angle, np.random.randint(0, 255, (3))) for angle in angles]
 
     return output
+
 
 def get_thresholds(count, base, delta, incr):
     levels = []
@@ -169,12 +167,12 @@ def get_thresholds(count, base, delta, incr):
         curr += base
     return levels
 
+
 def main():
     img = load_image(color=True)
     result = edge_detection(img, 4, 60)
     result = np.maximum(result[:, :, 0], result[:, :, 1], result[:, :, 2])
     show_image(result)
-    
 
 
 if __name__ == "__main__":

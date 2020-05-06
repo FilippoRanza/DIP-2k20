@@ -2,6 +2,8 @@
 import os
 from os import path
 
+from argparse import ArgumentParser
+
 import cv2
 
 
@@ -43,5 +45,30 @@ def load_image(name=None, root="images", color=False):
 
     if img is None:
         raise ValueError(f"cannot load {name}")
+
+    return img
+
+
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "name",
+        nargs="?",
+        help="specify file to open or the directory containing images to open",
+    )
+    return parser.parse_args()
+
+
+def load_image_from_arg():
+    args = parse_args()
+    if args.name:
+        if path.isdir(args.name):
+            img = load_image(root=args.name)
+        elif path.isfile(args.name):
+            img = load_image(name=args.name)
+        else:
+            img = load_image()
+    else:
+        img = load_image()
 
     return img
