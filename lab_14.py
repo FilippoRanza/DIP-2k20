@@ -9,14 +9,44 @@ import numpy as np
 
 from utils import *
 
-class QuadTree:
+def check_variance(img, var_threshold):
+    var = np.var(img.ravel())
+    return var > var_threshold
 
-    def __init__(self, img):
-        self.img = img
+class AbstractQuadTree:
+    def __init__(self, data):
+        self.img = data
         self.tl = None
         self.tr = None
         self.bl = None
         self.br = None
+
+    
+    def split(self):
+        raise NotImplementedError
+
+    def check_split(self,  min_size, var_threshold):
+        raise NotImplementedError
+
+    def run(self, min_size, var_threshold):
+        if self.check_split(min_size, var_threshold):
+            self.split()
+            self.tl.run(min_size, var_threshold)
+            self.tr.run(min_size, var_threshold)
+            self.bl.run(min_size, var_threshold)
+            self.br.run(min_size, var_threshold)
+
+
+class ImgQuadTree(AbstractQuadTree):
+
+    def __init__(self, img):
+        super().__init__(img)
+
+    def check_split(self,  min_size, var_threshold):
+        size_x, size_y = self.img.shape
+        if min_size <= size_x and min_size <= size_y:
+            return check_variance(self.img, var_threshold)
+        return False
 
     def split(self):
         size_x, size_y = self.img.shape
@@ -24,41 +54,23 @@ class QuadTree:
         y = size_y // 2
     
         tl = self.img[:x, :y]
-        self.tl = QuadTree(tl)
+        self.tl = ImgQuadTree(tl)
         tr = self.img[x:, :y]
-        self.tr = QuadTree(tr)
+        self.tr = ImgQuadTree(tr)
         bl = self.img[:x, y:]
-        self.bl = QuadTree(bl)
+        self.bl = ImgQuadTree(bl)
         br = self.img[x:, y:]
-        self.br = QuadTree(br)
+        self.br = ImgQuadTree(br)
 
 
-    def run(self, min_size, var_threshold):
-        size_x, size_y = self.img.shape
-        if min_size <= size_x and min_size <= size_y:
-            var = np.var(self.img.ravel())
-            if var > var_threshold:
-                self.split()
-                self.tl.run(min_size, var_threshold)
-                self.tr.run(min_size, var_threshold)
-                self.bl.run(min_size, var_threshold)
-                self.br.run(min_size, var_threshold)
-                
-
-
-def split(img, min_size, var_threshold):
-    root = QuadTree(img)
-    root.run(min_size, var_threshold)
-    return root
-    
-def apply_tree(tree, call_back):
+def apply_img_tree(tree, call_back):
     if tree is None:
         return True
     else:
-        bottom_tl = apply_tree(tree.tl, call_back)
-        bottom_tr = apply_tree(tree.tr, call_back) 
-        bottom_bl = apply_tree(tree.bl, call_back) 
-        bottom_br = apply_tree(tree.br, call_back)                
+        bottom_tl = apply_img_tree(tree.tl, call_back)
+        bottom_tr = apply_img_tree(tree.tr, call_back) 
+        bottom_bl = apply_img_tree(tree.bl, call_back) 
+        bottom_br = apply_img_tree(tree.br, call_back)                
         bottom = bottom_tl and bottom_tr and bottom_bl and bottom_br
         call_back(tree.img, bottom)
         return False
@@ -80,16 +92,157 @@ def avg_sub_region(img, bottom):
         avg = np.mean(img.ravel())
         img[:, :] = avg
 
-def main():
-    full_img = load_image(color=True)
-    for ch in range(3):
-        img = full_img[:, :, ch]
-        var = np.var(img.ravel())
-        tree = split(img, 3, var // 10)
-        apply_tree(tree, avg_sub_region)
-        apply_tree(tree, draw_boarder)
 
-    show_image(full_img, wait=10)
+
+class RectQuadTree(AbstractQuadTree):
+    def __init__(self, rect, img):
+        super().__init__(rect)
+        self.buff = img
+
+
+    def check_split(self, min_size, var_threshold):
+        x, y, w, h = self.img
+        if w > min_size and h > min_size:
+            return check_variance(self.get_image(), var_threshold)
+        return False
+
+    def split(self):
+        x, y, w, h = self.img
+        w //= 2
+        h //= 2
+        
+        tl = (x, y, w, h)
+        self.tl = RectQuadTree(tl, self.buff)
+
+        tr = (x+w, y, w, h)
+        self.tr = RectQuadTree(tr, self.buff)
+
+        bl = (x, y+h, w, h)
+        self.bl = RectQuadTree(bl, self.buff)
+
+        br = (x+w, y+h, w, h)
+        self.br = RectQuadTree(br, self.buff)
+
+    def get_image(self):
+        x, y, w, h = self.img
+        return self.buff[x:x+w, y:y+h]
+
+
+def split(img, min_size, var_threshold, rect=False):
+    
+    if rect:
+        w, h = img.shape
+        root = RectQuadTree((0, 0, w, h), img)
+    else:
+        root = ImgQuadTree(img)
+
+    root.run(min_size, var_threshold)
+    return root
+    
+
+def proximity_test(a, b, th):
+    if a is None or b is None:
+        return False
+    a = a.get_image()
+    b = b.get_image()
+    tmp = np.concatenate((a, b))
+    var = np.var(tmp)
+    return var < th
+    
+
+def join_near_rect(a, b):
+    xa, ya, wa, ha = a.img
+    xb, yb, wb, hb = b.img
+
+    if xa == xb:
+        output = (xa, ya, wa, ha + hb)
+    else:
+        output = (xa, ya, wa + wb, ha)
+    return output
+
+
+def merge_tree(tree, threshold):
+    if tree is None:
+        return True
+    else:
+        merge_tree(tree.tl, threshold)
+        merge_tree(tree.tr, threshold)
+        merge_tree(tree.bl, threshold)
+        merge_tree(tree.br, threshold)
+        if proximity_test(tree.tl, tree.tr, threshold):
+            tree.tl.img = join_near_rect(tree.tl, tree.tr)
+            tree.tr = None
+
+        if proximity_test(tree.tl, tree.bl, threshold):
+            tree.tl.img = join_near_rect(tree.tl, tree.bl)
+            tree.bl = None
+
+        if proximity_test(tree.tr, tree.br, threshold):
+            tree.tr.img = join_near_rect(tree.tr, tree.br)
+            tree.br = None
+
+        if proximity_test(tree.bl, tree.br, threshold):
+            tree.bl.img = join_near_rect(tree.bl, tree.br)
+            tree.br = None
+
+
+
+        return False
+
+def draw_join_rect(tree):
+    if tree is None:
+        return 
+    else:
+        draw_join_rect(tree.tl)
+        draw_join_rect(tree.tr)
+        draw_join_rect(tree.bl)
+        draw_join_rect(tree.br)
+        
+        x, y, w, h = tree.img
+        for i in range(x, x + w):
+            tree.buff[i, y] = 0
+            tree.buff[i, y+h-1] = 0
+
+        for i in range(y, y + h):
+            tree.buff[x, i] = 0
+            tree.buff[x+w-1, i] = 0
+            
+
+def avg_region_rect(tree):
+    if tree is None:
+        return True
+    else:
+        a = avg_region_rect(tree.tl)
+        b = avg_region_rect(tree.tr)
+        c = avg_region_rect(tree.bl)
+        d = avg_region_rect(tree.br)
+        if a and b and c and d:
+            img = tree.get_image()
+            value = np.mean(img)
+            img[:, :] = value
+
+        return False
+
+def main():
+    img = load_image_from_arg()    
+    img_a = img.copy()
+    img_b = img
+    
+    var = np.var(img.ravel())
+    
+    split_threshold = var // 100
+    merge_threshold = var // 10
+
+    tree = split(img_a, 1, split_threshold, rect=True)
+    merge_tree(tree, merge_threshold)
+    draw_join_rect(tree)
+    #avg_region_rect(tree)
+
+    tree = split(img_b, 1, split_threshold, rect=True)
+    draw_join_rect(tree)
+    #avg_region_rect(tree)
+
+    show_image(('split', img_b), ('split-merge', img_a), wait=30)
 
 if __name__ == '__main__':
     main()
