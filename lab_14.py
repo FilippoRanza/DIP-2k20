@@ -15,7 +15,7 @@ def check_variance(img, var_threshold):
 
 class AbstractQuadTree:
     def __init__(self, data):
-        self.img = data
+        self.value = data
         self.tl = None
         self.tr = None
         self.bl = None
@@ -43,23 +43,23 @@ class ImgQuadTree(AbstractQuadTree):
         super().__init__(img)
 
     def check_split(self,  min_size, var_threshold):
-        size_x, size_y = self.img.shape
+        size_x, size_y = self.value.shape
         if min_size <= size_x and min_size <= size_y:
-            return check_variance(self.img, var_threshold)
+            return check_variance(self.value, var_threshold)
         return False
 
     def split(self):
-        size_x, size_y = self.img.shape
+        size_x, size_y = self.value.shape
         x = size_x // 2
         y = size_y // 2
     
-        tl = self.img[:x, :y]
+        tl = self.value[:x, :y]
         self.tl = ImgQuadTree(tl)
-        tr = self.img[x:, :y]
+        tr = self.value[x:, :y]
         self.tr = ImgQuadTree(tr)
-        bl = self.img[:x, y:]
+        bl = self.value[:x, y:]
         self.bl = ImgQuadTree(bl)
-        br = self.img[x:, y:]
+        br = self.value[x:, y:]
         self.br = ImgQuadTree(br)
 
 
@@ -101,13 +101,13 @@ class RectQuadTree(AbstractQuadTree):
 
 
     def check_split(self, min_size, var_threshold):
-        x, y, w, h = self.img
+        x, y, w, h = self.value
         if w > min_size and h > min_size:
             return check_variance(self.get_image(), var_threshold)
         return False
 
     def split(self):
-        x, y, w, h = self.img
+        x, y, w, h = self.value
         w //= 2
         h //= 2
         
@@ -124,7 +124,7 @@ class RectQuadTree(AbstractQuadTree):
         self.br = RectQuadTree(br, self.buff)
 
     def get_image(self):
-        x, y, w, h = self.img
+        x, y, w, h = self.value
         return self.buff[x:x+w, y:y+h]
 
 
@@ -151,8 +151,8 @@ def proximity_test(a, b, th):
     
 
 def join_near_rect(a, b):
-    xa, ya, wa, ha = a.img
-    xb, yb, wb, hb = b.img
+    xa, ya, wa, ha = a.value
+    xb, yb, wb, hb = b.value
 
     if xa == xb:
         output = (xa, ya, wa, ha + hb)
@@ -170,19 +170,19 @@ def merge_tree(tree, threshold):
         merge_tree(tree.bl, threshold)
         merge_tree(tree.br, threshold)
         if proximity_test(tree.tl, tree.tr, threshold):
-            tree.tl.img = join_near_rect(tree.tl, tree.tr)
+            tree.tl.value = join_near_rect(tree.tl, tree.tr)
             tree.tr = None
 
         if proximity_test(tree.tl, tree.bl, threshold):
-            tree.tl.img = join_near_rect(tree.tl, tree.bl)
+            tree.tl.value = join_near_rect(tree.tl, tree.bl)
             tree.bl = None
 
         if proximity_test(tree.tr, tree.br, threshold):
-            tree.tr.img = join_near_rect(tree.tr, tree.br)
+            tree.tr.value = join_near_rect(tree.tr, tree.br)
             tree.br = None
 
         if proximity_test(tree.bl, tree.br, threshold):
-            tree.bl.img = join_near_rect(tree.bl, tree.br)
+            tree.bl.value = join_near_rect(tree.bl, tree.br)
             tree.br = None
 
 
@@ -198,7 +198,7 @@ def draw_join_rect(tree):
         draw_join_rect(tree.bl)
         draw_join_rect(tree.br)
         
-        x, y, w, h = tree.img
+        x, y, w, h = tree.value
         for i in range(x, x + w):
             tree.buff[i, y] = 0
             tree.buff[i, y+h-1] = 0
