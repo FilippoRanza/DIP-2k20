@@ -65,7 +65,7 @@ def show_histogram(img, *threshold):
     m = max(h)
     plt.plot(h)
     for th in threshold:
-        plt.plot([th, th], [0, m], color="r")
+        plt.plot([th, th], [0, m])
     plt.show()
 
 
