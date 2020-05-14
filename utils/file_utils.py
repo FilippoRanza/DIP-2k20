@@ -59,16 +59,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_image_from_arg():
+def load_image_from_arg(color=False):
     args = parse_args()
     if args.name:
         if path.isdir(args.name):
-            img = load_image(root=args.name)
+            img = load_image(root=args.name, color=color)
         elif path.isfile(args.name):
-            img = load_image(name=args.name)
+            img = load_image(name=args.name, color=color)
         else:
-            img = load_image()
+            img = load_image(color=color)
     else:
-        img = load_image()
+        img = load_image(color=color)
 
     return img
