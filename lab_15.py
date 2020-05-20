@@ -21,8 +21,21 @@ def random_seed(regions):
 
         return secrets.choice(available)
 
+def simple_distance(img, center, pixel, _region, _regions):
+    x, y = center
+    nx, ny = pixel
+    return np.linalg.norm(img[x, y] - img[nx, ny]) / (img[x, y] + img[nx, ny])
 
-def grow_region(img, regions, pixel, region, seed_list, threshold, borders):
+def mean_distance(img, _center, pixel, region, regions):
+    indexes = np.where(regions == region)
+    mean = np.mean(img[indexes], axis=0)
+    mean = np.round(mean)
+    mean = np.uint8(mean)  
+
+    x, y = pixel
+    return np.linalg.norm(img[x, y] - mean) / (img[x, y] + mean)
+
+def grow_region(img, regions, pixel, region, seed_list, threshold, borders, distance):
     output = 0
     x, y = pixel
     size_x, size_y = img.shape[0], img.shape[1]
@@ -33,7 +46,7 @@ def grow_region(img, regions, pixel, region, seed_list, threshold, borders):
                 ny = y + j
                 if 0 <= nx < size_x and 0 <= ny < size_y:
                     if regions[nx, ny] == 0:
-                        if np.linalg.norm(img[x, y] - img[nx, ny]) < threshold:
+                        if distance(img, (x, y), (nx, ny), region, regions) < threshold:
                             regions[nx, ny] = region
                             seed_list.append((nx, ny))
                             output += 1
@@ -43,7 +56,7 @@ def grow_region(img, regions, pixel, region, seed_list, threshold, borders):
     return output
 
 
-def region_growing(img, threashold, borders=False):
+def region_growing(img, threashold, borders=False, simple=True):
     img = img.astype(np.float)
     size_x, size_y = img.shape[0], img.shape[1]
     total = size_y * size_x
@@ -62,8 +75,9 @@ def region_growing(img, threashold, borders=False):
         processed += 1
         while seed_list:
             pixel = seed_list.pop()
+            f = simple_distance if simple else mean_distance
             processed += grow_region(
-                img, regions, pixel, current, seed_list, threashold, borders
+                img, regions, pixel, current, seed_list, threashold, borders, f
             )
 
     print()
@@ -82,8 +96,9 @@ def apply_regions(img, regions, total):
 
 
 def main():
-    img = load_image_from_arg(color=True)
-    regions, current = region_growing(img, 10)
+    img = load_image_from_arg(color=False)
+    regions, current = region_growing(img, 0.1, simple=False)
+    print(current, "regions fund")
     segmented = apply_regions(img, regions, current)
     show_image(img, segmented, wait=60)
 
