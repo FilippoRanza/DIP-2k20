@@ -18,7 +18,6 @@ def random_seed(regions):
     if len(available) == 0:
         return None
     else:
-
         return secrets.choice(available)
 
 
@@ -43,19 +42,18 @@ def grow_region(img, regions, pixel, region, seed_list, threshold, borders, dist
     x, y = pixel
     size_x, size_y = img.shape[0], img.shape[1]
     for i in (-1, 0, 1):
-        for j in (-1, 0, 1):
-            if i and j:
-                nx = x + i
-                ny = y + j
-                if 0 <= nx < size_x and 0 <= ny < size_y:
-                    if regions[nx, ny] == 0:
-                        if distance(img, (x, y), (nx, ny), region, regions) < threshold:
-                            regions[nx, ny] = region
-                            seed_list.append((nx, ny))
-                            output += 1
-                        elif borders:
-                            regions[nx, ny] = -1
-                            output += 1
+        for j in (-1, 0, 1):    
+            nx = x + i
+            ny = y + j
+            if 0 <= nx < size_x and 0 <= ny < size_y:
+                if regions[nx, ny] == 0:
+                    if distance(img, (x, y), (nx, ny), region, regions) < threshold:
+                        regions[nx, ny] = region
+                        seed_list.append((nx, ny))
+                        output += 1
+                    elif borders:
+                        regions[nx, ny] = -1
+                        output += 1
     return output
 
 
@@ -100,7 +98,7 @@ def apply_regions(img, regions, total):
 
 def main():
     img = load_image_from_arg(color=False)
-    regions, current = region_growing(img, 0.1, simple=False)
+    regions, current = region_growing(img, 0.01, simple=True)
     print(current, "regions fund")
     segmented = apply_regions(img, regions, current)
     show_image(img, segmented, wait=60)
