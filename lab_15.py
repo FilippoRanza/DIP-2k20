@@ -21,19 +21,22 @@ def random_seed(regions):
 
         return secrets.choice(available)
 
+
 def simple_distance(img, center, pixel, _region, _regions):
     x, y = center
     nx, ny = pixel
-    return np.linalg.norm(img[x, y] - img[nx, ny]) / (img[x, y] + img[nx, ny])
+    return abs(img[x, y] - img[nx, ny]) / (img[x, y] + img[nx, ny] + 1)
+
 
 def mean_distance(img, _center, pixel, region, regions):
     indexes = np.where(regions == region)
     mean = np.mean(img[indexes], axis=0)
     mean = np.round(mean)
-    mean = np.uint8(mean)  
+    mean = np.uint8(mean)
 
     x, y = pixel
-    return np.linalg.norm(img[x, y] - mean) / (img[x, y] + mean)
+    return abs(img[x, y] - mean) / (img[x, y] + mean + 1)
+
 
 def grow_region(img, regions, pixel, region, seed_list, threshold, borders, distance):
     output = 0
