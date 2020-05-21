@@ -94,17 +94,14 @@ def main():
         ]
     )
     img = 255 - img
-    erosion_img = erosion(img)
-    dilation_img = dilation(img)
-
-    new_erosion_img = morphological_operator(img, cross_kernel, 255, False)
-    new_dilation_img = morphological_operator(img, cross_kernel, 255, True)
     
-    show_image(("Binary", img), ("Erosion", erosion_img), ("Dilation", dilation_img), ("New Erosion", new_erosion_img), ("New Dilation", new_dilation_img))
+    for _ in range(6):
+        tmp = erosion(img)
+        tmp = opening(tmp)
+        img = tmp
 
-    open_img = opening(img)
-    close_img = closing(img)
-    show_image(("Open", open_img), ("Close", close_img))
+    show_image(img, wait=10)
+
 
 
 if __name__ == "__main__":
