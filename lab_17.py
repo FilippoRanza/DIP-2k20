@@ -62,6 +62,27 @@ def dilation(img):
     return cross_operator(img, lambda a, b, c, d: a or b or c or d)
 
 
+def opening(img, kernel=None, value=None):
+    if kernel is None:
+        img = erosion(img)
+        img = dilation(img)
+    else:
+        img = morphological_operator(img, kernel, value, False)
+        img = morphological_operator(img, kernel, value, True)
+
+    return img
+
+def closing(img, kernel=None, value=None):
+    if kernel is None:
+        img = dilation(img)
+        img = erosion(img)
+    else: 
+        img = morphological_operator(img, kernel, value, True)
+        img = morphological_operator(img, kernel, value, False)
+
+    return img
+
+
 def main():
     img = load_image_from_arg()
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -80,6 +101,10 @@ def main():
     new_dilation_img = morphological_operator(img, cross_kernel, 255, True)
     
     show_image(("Binary", img), ("Erosion", erosion_img), ("Dilation", dilation_img), ("New Erosion", new_erosion_img), ("New Dilation", new_dilation_img))
+
+    open_img = opening(img)
+    close_img = closing(img)
+    show_image(("Open", open_img), ("Close", close_img))
 
 
 if __name__ == "__main__":
