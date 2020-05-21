@@ -24,6 +24,35 @@ def cross_operator(img, callback):
 
     return output
 
+def morphological_operator(img, kernel, value, early):
+    size_x, size_y = img.shape
+    kx, ky = kernel.shape
+    kx //= 2 
+    ky //= 2
+    output = np.zeros((size_x, size_y), dtype=np.uint8)
+    for x in range(size_x):
+        for y in range(size_y):
+            stat = True
+            for i, row in enumerate(kernel):
+                if not stat:
+                    break
+                px = x + (i - kx)
+                px = min(max(0, px), size_x-1)
+                for j, v in enumerate(row):
+                    if v:
+                        py = y + (j - ky)
+                        py = min(max(0, py), size_y-1)
+                        if img[px, py] == 255:
+                            if early:
+                                output[x, y] = value
+                                stat = False
+                                break
+                        else:
+                            stat = False
+                            break
+            if stat:
+                output[x, y] = value
+    return output
 
 def erosion(img):
     return cross_operator(img, lambda a, b, c, d: a and b and c and d)
@@ -36,11 +65,21 @@ def dilation(img):
 def main():
     img = load_image_from_arg()
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    cross_kernel = np.array(
+        [
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 1, 0]
+        ]
+    )
     img = 255 - img
     erosion_img = erosion(img)
     dilation_img = dilation(img)
 
-    show_image(("Binary", img), ("Erosion", erosion_img), ("Dilation", dilation_img))
+    new_erosion_img = morphological_operator(img, cross_kernel, 255, False)
+    new_dilation_img = morphological_operator(img, cross_kernel, 255, True)
+    
+    show_image(("Binary", img), ("Erosion", erosion_img), ("Dilation", dilation_img), ("New Erosion", new_erosion_img), ("New Dilation", new_dilation_img))
 
 
 if __name__ == "__main__":
