@@ -85,22 +85,31 @@ def closing(img, kernel=None, value=None):
 
 def main():
     img = load_image_from_arg()
+    original = img.copy()
     _, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    cross_kernel = np.array(
-        [
-            [0, 1, 0],
-            [1, 0, 1],
-            [0, 1, 0]
-        ]
-    )
-    img = 255 - img
     
-    for _ in range(6):
-        tmp = erosion(img)
-        tmp = opening(tmp)
-        img = tmp
+    if False:
+        cross_kernel = np.array([[1., 0., 1., 0., 1.],
+                                 [0., 1., 1., 1., 0.],
+                                 [1., 1., 0., 1., 1.],
+                                 [0., 1., 1., 1., 0.],
+                                 [1., 0., 1., 0., 1.]], dtype=np.uint8)
+    else:
+        cross_kernel = np.array([
+                                 [1., 1., 1.],
+                                 [1., 0., 1.],
+                                 [1., 1., 1.],
+                                 ], dtype=np.uint8)
 
-    show_image(img, wait=10)
+    img = 255 - img
+    binary = img.copy()
+
+    img = cv2.dilate(img, cross_kernel)
+    img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, cross_kernel)
+    img = cv2.erode(img, cross_kernel)
+
+
+    show_image(original, binary, img, wait=60)
 
 
 
