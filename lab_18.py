@@ -13,16 +13,16 @@ from utils import *
 
 
 def sub_histogram(img, size=4):
-    size_x, size_y = img.shape
-    size_x //= size
-    size_y //= size
-    output = np.zeros((size, size, 256), dtype=np.float32)
+    height, width, channels = img.shape
+    height //= size
+    width //= size
+    output = np.zeros((size, size, channels, 256), dtype=np.float32)
     for i in range(size):
         for j in range(size):
-            tmp = img[size_x * i : size_x * (i + 1), size_y * j : size_y * (j + 1)]
-            tmp = cv2.calcHist([tmp], [0], None, [256], [0, 256], accumulate=False)
-            tmp /= size_x * size_y
-            output[i, j] = tmp[:, 0]
+            for c in range(channels):
+                tmp = img[height * i : height * (i + 1), width * j : width * (j + 1), c]
+                tmp = get_histogram(tmp, True)
+                output[i, j, c] = tmp
     return output
 
 
@@ -36,13 +36,14 @@ def distance(mat_hist_a, mat_hist_b):
 
 
 def search_similar(img, size, path):
+    color = len(img.shape) == 3
     img_sub_hist = sub_histogram(img, size)
     min_err = -1
     min_img = None
     for entry in os.scandir(path):
         if entry.is_file:
             name = entry.path
-            tmp = load_image(name)
+            tmp = load_image(name, color=color)
             tmp_sub_hist = sub_histogram(tmp, size)
             err = distance(img_sub_hist, tmp_sub_hist)
             print(err, name)
@@ -54,10 +55,10 @@ def search_similar(img, size, path):
 
 
 def main():
-    img = load_image_from_arg()
-    similar = search_similar(img, size=7, path="images")
+    img = load_image_from_arg(color=True)
+    similar = search_similar(img, size=5, path="images")
     print(similar)
-    similar = load_image(similar)
+    similar = load_image(similar, color=True)
     show_image(("given", img), ("similar", similar), wait=10)
 
 
